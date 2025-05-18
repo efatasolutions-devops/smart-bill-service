@@ -22,6 +22,12 @@ func handler() http.HandlerFunc {
 
 	allController := injector.InitializeController()
 
+	app.Get("/arifin", func(c *fiber.Ctx) error {
+		return &fiber.Error{
+			Code:    212,
+			Message: "error aja",
+		}
+	})
 	app.Get("/", allController.SplitbilController.Splitbil)
 
 	return adaptor.FiberApp(app)
