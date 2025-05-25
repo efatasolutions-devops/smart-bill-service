@@ -70,14 +70,15 @@ func (splitbilSeviceImpl *SplibillServiceImpl) Splitbil(app *fiber.Ctx) (map[str
   },
   "totals": {
     "change": "[Uang Kembali]",
-    "discount": "[Nilai Diskon]",
+    "discount": "[Nilai Diskon/Nilai Yang Dikurangi]",
     "payment": "[Jumlah Pembayaran]",
-    "service_charge": "[Biaya Layanan]",
     "subtotal": "[Subtotal]",
     "tax": {
       "amount": "[Nilai Pajak]",
+	  "service_charge": "[Biaya Layanan]",
       "dpp": "[Dasar Pengenaan Pajak]",
-      "name": "[Nama Pajak]"
+      "name": "[Nama Pajak]",
+	  "total_tax": "[Total Pajak dari service_charge + amount]"
     },
     "total": "[Total Belanja]"
   },
@@ -88,7 +89,7 @@ func (splitbilSeviceImpl *SplibillServiceImpl) Splitbil(app *fiber.Ctx) (map[str
   }
 }
 
-Pastikan semua nilai diisi sesuai dengan informasi yang tertera pada struk. Jika suatu informasi tidak ditemukan, gunakan nilai null atau string kosong untuk field yang sesuai. Untuk nilai numerik (harga, kuantitas, total, dll.), kembalikan dalam format string seperti pada contoh.
+Pastikan semua nilai diisi sesuai dengan informasi yang tertera pada struk. Jika suatu informasi tidak ditemukan, gunakan nilai null atau string kosong untuk field yang sesuai. Untuk nilai numerik (harga, kuantitas, total, dll.), kembalikan dalam format desimal seperti pada contoh.
 `
 
 	parts := []*genai.Part{
