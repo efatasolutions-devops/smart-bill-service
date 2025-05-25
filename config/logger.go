@@ -175,6 +175,7 @@ func createDirStorageLogs() {
 	dirs := []string{
 		"./storage/logs/general_log",
 		"./storage/logs",
+		"./storage/public",
 		"./storage/public/images",
 	}
 	permission_chmod := os.Getenv("LOG_PERMISSION_CHMOD")
