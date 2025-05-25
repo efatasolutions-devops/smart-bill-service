@@ -4,7 +4,7 @@ version: '3.8'
 services:
   splitbill_golang_app:
     build:
-      # context: . # Membangun image dari direktori ./app
+      context: . # Membangun image dari direktori ./app
       dockerfile: Dockerfile.golang # Menggunakan Dockerfile kustom untuk Golang
     restart: always # Selalu restart jika crash
     expose:
