@@ -29,6 +29,7 @@ func main() {
 	appconfig.InitApplication()
 	app.Use(cors.New())
 
+	config.ConnectFirebase()
 	config.Logger(app)
 	routes.Router(app)
 	if err := app.Listen(":3000"); err != nil {

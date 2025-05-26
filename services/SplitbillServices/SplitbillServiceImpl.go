@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil" // Tambahkan ini
 	"os"
 	"strings"
-	"time"
+
+	// "time" // Tidak perlu lagi timestamp di sini, karena sudah di handle di UploadFile
 
 	"github.com/arifin2018/splitbill-arifin.git/config"
 	files "github.com/arifin2018/splitbill-arifin.git/helpers/Files"
@@ -16,35 +18,52 @@ import (
 )
 
 func (splitbilSeviceImpl *SplibillServiceImpl) Splitbil(app *fiber.Ctx) (map[string]interface{}, error) {
-	t := time.Now()
-	timestamp := t.Format("20060102150405")
-
 	fileheader, err := app.FormFile("image")
 	if err != nil {
+		config.GeneralLogger.Printf("Error retrieving file from form: %v\n", err.Error()) // Log lebih spesifik
 		return nil, errors.New(fmt.Sprintf("Error retrieving file: %v", err.Error()))
 	}
 
-	nameFileImage := fmt.Sprintf("%v_%v", timestamp, strings.TrimSpace(fileheader.Filename))
-	imagePath := fmt.Sprintf("%s/%s", files.ImageLocation, nameFileImage) // Ganti dengan path gambar struk Indomaret Anda
-	files.UploadImage(app, fileheader, imagePath)
+	uploadedImageURL, err := files.UploadImage(app, fileheader)
+	if err != nil {
+		// Ini akan mencetak error yang dikembalikan oleh files.UploadImage
+		config.GeneralLogger.Printf("Failed to upload image to Firebase Storage: %v\n", err.Error())
+		return nil, errors.New(fmt.Sprintf("Error uploading image to Firebase Storage: %v", err.Error()))
+	}
+
+	config.GeneralLogger.Println("Uploaded Image URL:", uploadedImageURL) // Ini harusnya tidak kosong jika tidak ada error
+
+	// --- Perubahan besar di sini: Cara mendapatkan data gambar untuk Gemini ---
+	file, err := fileheader.Open()
+	if err != nil {
+		config.GeneralLogger.Printf("Error opening file for Gemini: %v\n", err.Error()) // Log lebih spesifik
+		return nil, errors.New(fmt.Sprintf("Error opening file for Gemini: %v", err.Error()))
+	}
+	defer file.Close()
+
+	imgData, err := ioutil.ReadAll(file)
+	if err != nil {
+		config.GeneralLogger.Printf("Failed to read image data for Gemini: %v\n", err.Error()) // Log lebih spesifik
+		return nil, errors.New(fmt.Sprintf("Failed to read image data for Gemini: %v", err.Error()))
+	}
+	// --- Akhir perubahan besar untuk Gemini ---
+
 	ctx := context.Background()
 	client, err := genai.NewClient(ctx, &genai.ClientConfig{
 		APIKey:  os.Getenv("GEMINI_API_KEY"),
 		Backend: genai.BackendGeminiAPI,
 	})
 	if err != nil {
+		config.GeneralLogger.Printf("Failed to create Gemini client: %v\n", err.Error()) // Log lebih spesifik
 		return nil, errors.New(fmt.Sprintf("Failed to create client: %v", err.Error()))
 	}
-	config.GeneralLogger.Println(app.Query("image"))
+	// config.GeneralLogger.Println(app.Query("image")) // Ini tidak relevan lagi
 
-	config.GeneralLogger.Println(imagePath)
-	imgData, err := os.ReadFile(imagePath)
-	if err != nil {
-		return nil, errors.New(fmt.Sprintf("Failed to read image: %v", err.Error()))
-	}
+	config.GeneralLogger.Println("Uploaded Image URL:", uploadedImageURL) // Log URL gambar yang diunggah
+	// config.GeneralLogger.Println(imagePath) // Ini tidak relevan lagi
 
+	// Bagian prompt untuk Gemini tetap sama
 	prompt := `Tolong lakukan Optical Character Recognition (OCR) pada gambar struk ini dan ekstrak informasi belanja. Kembalikan hasilnya dalam format JSON dengan struktur berikut:
-
 {
   "items": [
     {
@@ -75,10 +94,10 @@ func (splitbilSeviceImpl *SplibillServiceImpl) Splitbil(app *fiber.Ctx) (map[str
     "subtotal": "[Subtotal]",
     "tax": {
       "amount": "[Nilai Pajak]",
-	  "service_charge": "[Biaya Layanan]",
+      "service_charge": "[Biaya Layanan]",
       "dpp": "[Dasar Pengenaan Pajak]",
       "name": "[Nama Pajak]",
-	  "total_tax": "[Total Pajak dari service_charge + amount]"
+      "total_tax": "[Total Pajak dari service_charge + amount]"
     },
     "total": "[Total Belanja]"
   },
@@ -96,8 +115,8 @@ Pastikan semua nilai diisi sesuai dengan informasi yang tertera pada struk. Jika
 		genai.NewPartFromText(prompt),
 		&genai.Part{
 			InlineData: &genai.Blob{
-				MIMEType: "image/jpeg",
-				Data:     imgData,
+				MIMEType: fileheader.Header.Get("Content-Type"), // Gunakan Content-Type asli dari file header
+				Data:     imgData,                               // Menggunakan imgData yang dibaca dari fileheader
 			},
 		},
 	}
@@ -136,11 +155,8 @@ Pastikan semua nilai diisi sesuai dengan informasi yang tertera pada struk. Jika
 	if err != nil {
 		config.GeneralLogger.Println("\nFailed to unmarshal JSON after cleaning:")
 		return nil, errors.New(fmt.Sprintf("Failed to unmarshal JSON after cleaning: %v", err.Error()))
-		// Jika masih gagal, mungkin format JSON dari Gemini tidak sepenuhnya valid
 	} else {
 		config.GeneralLogger.Println("\nSuccessfully unmarshaled JSON after cleaning:")
-		// Sekarang Anda dapat bekerja dengan jsonData sebagai map
-		// Contoh mengakses beberapa field:
 		if items, ok := jsonData["items"].([]interface{}); ok {
 			config.GeneralLogger.Printf("Number of items: %d\n", len(items))
 			if len(items) > 0 {
