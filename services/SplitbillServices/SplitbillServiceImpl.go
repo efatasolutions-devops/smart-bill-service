@@ -63,18 +63,66 @@ func (splitbilSeviceImpl *SplibillServiceImpl) Splitbil(app *fiber.Ctx) (map[str
 	// config.GeneralLogger.Println(imagePath) // Ini tidak relevan lagi
 
 	// Bagian prompt untuk Gemini tetap sama
+	// 	prompt := `Tolong lakukan Optical Character Recognition (OCR) pada gambar struk ini dan ekstrak informasi belanja. Kembalikan hasilnya dalam format JSON dengan struktur berikut:
+	// {
+	//   "items": [
+	//     {
+	//       "name": "[Nama Barang 1]",
+	// 	  "price": "[Harga per Unit 1] - Jika tidak tersedia secara eksplisit, hitung sebagai [Total Harga Item 1] / [Kuantitas 1]",
+	//       "quantity": "[Kuantitas 1]",
+	//       "total": "[Total Harga Item 1]"
+	//     },
+	//     {
+	//       "name": "[Nama Barang 2]",
+	//       "price": "[Harga per Unit 2]",
+	//       "quantity": "[Kuantitas 2]",
+	//       "total": "[Total Harga Item 2]"
+	//     }
+	//     // ... (dan seterusnya untuk semua item)
+	//   ],
+	//   "store_information": {
+	//     "address": "[Alamat Toko]",
+	//     "email": "[Email Toko]",
+	//     "npwp": "[NPWP Toko]",
+	//     "phone_number": "[Nomor Telepon Toko]",
+	//     "store_name": "[Nama Toko]"
+	//   },
+	//   "totals": {
+	//     "change": "[Uang Kembali]",
+	//     "discount": "[Nilai Diskon/Nilai Yang Dikurangi] kembalikan angka desimal tanpa pengurangan",
+	//     "payment": "[Jumlah Pembayaran]",
+	//     "subtotal": "[Subtotal]",
+	//     "tax": {
+	//       "amount": "[Nilai Pajak]",
+	//       "service_charge": "[Biaya Layanan]",
+	//       "dpp": "[Dasar Pengenaan Pajak]",
+	//       "name": "[Nama Pajak]",
+	//       "total_tax": "[Total Pajak dari service_charge + amount]"
+	//     },
+	//     "total": "[Total Belanja]"
+	//   },
+	//   "transaction_information": {
+	//     "date": "[Tanggal Transaksi]",
+	//     "time": "[Waktu Transaksi]",
+	//     "transaction_id": "[ID Transaksi]"
+	//   }
+	// }
+
+	// Pastikan semua nilai diisi sesuai dengan informasi yang tertera pada struk. Jika suatu informasi tidak ditemukan, gunakan nilai null atau string kosong untuk field yang sesuai. Untuk nilai numerik (harga, kuantitas, total, totals, discount, dll.), kembalikan dalam format desimal seperti pada contoh.
+	// `
+
 	prompt := `Tolong lakukan Optical Character Recognition (OCR) pada gambar struk ini dan ekstrak informasi belanja. Kembalikan hasilnya dalam format JSON dengan struktur berikut:
 {
   "items": [
     {
       "name": "[Nama Barang 1]",
-      "price": "[Harga per Unit 1]",
+      "price": "[Harga per Unit 1] - Jika tidak tersedia secara eksplisit sebagai kolom terpisah, hitung sebagai [Total Harga Item 1] dibagi [Kuantitas 1]. Jika pembagian menghasilkan angka tidak terbatas (misalnya, total 0 dan kuantitas 0), gunakan 0.",
       "quantity": "[Kuantitas 1]",
       "total": "[Total Harga Item 1]"
     },
     {
       "name": "[Nama Barang 2]",
-      "price": "[Harga per Unit 2]",
+      "price": "[Harga per Unit 2] - Jika tidak tersedia secara eksplisit sebagai kolom terpisah, hitung sebagai [Total Harga Item 2] dibagi [Kuantitas 2]. Jika pembagian menghasilkan angka tidak terbatas (misalnya, total 0 dan kuantitas 0), gunakan 0.",
       "quantity": "[Kuantitas 2]",
       "total": "[Total Harga Item 2]"
     }
@@ -89,7 +137,7 @@ func (splitbilSeviceImpl *SplibillServiceImpl) Splitbil(app *fiber.Ctx) (map[str
   },
   "totals": {
     "change": "[Uang Kembali]",
-    "discount": "[Nilai Diskon/Nilai Yang Dikurangi] kembalikan angka desimal tanpa pengurangan",
+    "discount": "[Nilai Diskon/Nilai Yang Dikurangi]. Kembalikan angka desimal tanpa pengurangan. Jika tidak ada diskon, gunakan 0.",
     "payment": "[Jumlah Pembayaran]",
     "subtotal": "[Subtotal]",
     "tax": {
@@ -102,14 +150,13 @@ func (splitbilSeviceImpl *SplibillServiceImpl) Splitbil(app *fiber.Ctx) (map[str
     "total": "[Total Belanja]"
   },
   "transaction_information": {
-    "date": "[Tanggal Transaksi]",
-    "time": "[Waktu Transaksi]",
+    "date": "[Tanggal Transaksi] dalam format DD/MM/YYYY",
+    "time": "[Waktu Transaksi] dalam format HH:MM",
     "transaction_id": "[ID Transaksi]"
   }
 }
 
-Pastikan semua nilai diisi sesuai dengan informasi yang tertera pada struk. Jika suatu informasi tidak ditemukan, gunakan nilai null atau string kosong untuk field yang sesuai. Untuk nilai numerik (harga, kuantitas, total, totals, discount, dll.), kembalikan dalam format desimal seperti pada contoh.
-`
+Pastikan semua nilai diisi sesuai dengan informasi yang tertera pada struk. Jika suatu informasi tidak ditemukan, gunakan nilai null atau string kosong untuk field yang sesuai. Untuk nilai numerik (harga, kuantitas, total, totals, discount, dll.), kembalikan dalam format desimal tanpa pemisah ribuan (misalnya, "220000.00" bukan "220,000.00").`
 
 	parts := []*genai.Part{
 		genai.NewPartFromText(prompt),
