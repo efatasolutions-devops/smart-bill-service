@@ -13,11 +13,13 @@ import (
 
 	"github.com/arifin2018/splitbill-arifin.git/config"
 	files "github.com/arifin2018/splitbill-arifin.git/helpers/Files"
+	"github.com/arifin2018/splitbill-arifin.git/helpers/files/buckets"
 	"github.com/gofiber/fiber/v2"
 	"google.golang.org/genai"
 )
 
 func (splitbilSeviceImpl *SplibillServiceImpl) Splitbil(app *fiber.Ctx) (map[string]interface{}, error) {
+	var bucketInterface buckets.BucketInterface
 	fileheader, err := app.FormFile("image")
 	if err != nil {
 		config.GeneralLogger.Printf("Error retrieving file from form: %v\n", err.Error()) // Log lebih spesifik
@@ -25,7 +27,15 @@ func (splitbilSeviceImpl *SplibillServiceImpl) Splitbil(app *fiber.Ctx) (map[str
 	}
 
 	var uploadedImage = files.UploadFileImpl{}
-	uploadedImageURL, err := uploadedImage.VM(app, fileheader)
+	if os.Getenv("BUCKET_STORAGE") == "VM" {
+		bucketInterface = new(buckets.VM)
+	} else if os.Getenv("BUCKET_STORAGE") == "FIREBASE" {
+		bucketInterface = new(buckets.Firebase)
+	} else {
+		return nil, errors.New("sorry bucket storage not found,please setup your bucket")
+	}
+
+	uploadedImageURL, err := uploadedImage.UploadImage(app, fileheader, bucketInterface)
 	if err != nil {
 		// Ini akan mencetak error yang dikembalikan oleh files.UploadImage
 		config.GeneralLogger.Printf("Failed to upload image to Firebase Storage: %v\n", err.Error())
