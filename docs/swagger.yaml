@@ -1,0 +1,149 @@
+basePath: /
+definitions:
+  models.ErrorResponse:
+    properties:
+      data:
+        type: string
+      status:
+        example: Error uploading image
+        type: string
+    type: object
+  models.Item:
+    properties:
+      name:
+        example: Nasi Goreng
+        type: string
+      price:
+        example: "25000.00"
+        type: string
+      quantity:
+        example: "2"
+        type: string
+      total:
+        example: "50000.00"
+        type: string
+    type: object
+  models.SplitbillResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/models.Item'
+        type: array
+      store_information:
+        $ref: '#/definitions/models.StoreInformation'
+      totals:
+        $ref: '#/definitions/models.Totals'
+      transaction_information:
+        $ref: '#/definitions/models.TransactionInfo'
+    type: object
+  models.StoreInformation:
+    properties:
+      address:
+        example: Jl. Sudirman No. 123, Jakarta
+        type: string
+      email:
+        example: info@restaurant.com
+        type: string
+      npwp:
+        example: 12.345.678.9-012.345
+        type: string
+      phone_number:
+        example: "+62812345678"
+        type: string
+      store_name:
+        example: Restaurant ABC
+        type: string
+    type: object
+  models.Tax:
+    properties:
+      amount:
+        example: "5000.00"
+        type: string
+      dpp:
+        example: "95000.00"
+        type: string
+      name:
+        example: PPN
+        type: string
+      service_charge:
+        example: "0.00"
+        type: string
+      total_tax:
+        example: "5000.00"
+        type: string
+    type: object
+  models.Totals:
+    properties:
+      change:
+        example: "5000.00"
+        type: string
+      discount:
+        example: "0.00"
+        type: string
+      payment:
+        example: "105000.00"
+        type: string
+      subtotal:
+        example: "95000.00"
+        type: string
+      tax:
+        $ref: '#/definitions/models.Tax'
+      total:
+        example: "100000.00"
+        type: string
+    type: object
+  models.TransactionInfo:
+    properties:
+      date:
+        example: 02/08/2025
+        type: string
+      time:
+        example: "19:30"
+        type: string
+      transaction_id:
+        example: TXN123456789
+        type: string
+    type: object
+host: localhost:3000
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: API untuk mengekstrak informasi splitbill dari gambar struk menggunakan
+    OCR dan AI
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Splitbill API
+  version: "1.0"
+paths:
+  /:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload a receipt image and extract detailed splitbill information
+        including items, store details, totals, and transaction information using
+        OCR and AI
+      parameters:
+      - description: Receipt image file (jpg, jpeg, png)
+        in: formData
+        name: image
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Successfully processed receipt
+          schema:
+            $ref: '#/definitions/models.SplitbillResponse'
+        "406":
+          description: Failed to process receipt
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Extract splitbill information from receipt image
+      tags:
+      - Splitbill
+swagger: "2.0"

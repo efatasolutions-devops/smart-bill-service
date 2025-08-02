@@ -10,8 +10,25 @@ import (
 	"github.com/arifin2018/splitbill-arifin.git/routes"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+
+	_ "github.com/arifin2018/splitbill-arifin.git/docs" // Import generated docs
+	fiberSwagger "github.com/swaggo/fiber-swagger"
 )
 
+// @title Splitbill API
+// @version 1.0
+// @description API untuk mengekstrak informasi splitbill dari gambar struk menggunakan OCR dan AI
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host localhost:3000
+// @BasePath /
 func main() {
 	app := fiber.New()
 
@@ -31,6 +48,10 @@ func main() {
 
 	config.ConnectFirebase()
 	config.Logger(app)
+
+	// Add Swagger route
+	app.Get("/swagger/*", fiberSwagger.WrapHandler)
+
 	routes.Router(app)
 	if err := app.Listen(":3000"); err != nil {
 		panic(err.Error())
