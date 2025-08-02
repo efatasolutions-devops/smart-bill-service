@@ -24,14 +24,15 @@ func (splitbilSeviceImpl *SplibillServiceImpl) Splitbil(app *fiber.Ctx) (map[str
 		return nil, errors.New(fmt.Sprintf("Error retrieving file: %v", err.Error()))
 	}
 
-	uploadedImageURL, err := files.UploadImage(app, fileheader)
+	var uploadedImage = files.UploadFileImpl{}
+	uploadedImageURL, err := uploadedImage.VM(app, fileheader)
 	if err != nil {
 		// Ini akan mencetak error yang dikembalikan oleh files.UploadImage
 		config.GeneralLogger.Printf("Failed to upload image to Firebase Storage: %v\n", err.Error())
 		return nil, errors.New(fmt.Sprintf("Error uploading image to Firebase Storage: %v", err.Error()))
 	}
-
-	config.GeneralLogger.Println("Uploaded Image URL:", uploadedImageURL) // Ini harusnya tidak kosong jika tidak ada error
+	// return nil, errors.New("testing")
+	// config.GeneralLogger.Println("Uploaded Image URL:", uploadedImageURL) // Ini harusnya tidak kosong jika tidak ada error
 
 	// --- Perubahan besar di sini: Cara mendapatkan data gambar untuk Gemini ---
 	file, err := fileheader.Open()
