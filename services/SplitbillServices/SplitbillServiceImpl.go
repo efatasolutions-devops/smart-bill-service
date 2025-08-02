@@ -12,7 +12,7 @@ import (
 	// "time" // Tidak perlu lagi timestamp di sini, karena sudah di handle di UploadFile
 
 	"github.com/arifin2018/splitbill-arifin.git/config"
-	files "github.com/arifin2018/splitbill-arifin.git/helpers/Files"
+	files "github.com/arifin2018/splitbill-arifin.git/helpers/files"
 	"github.com/arifin2018/splitbill-arifin.git/helpers/files/buckets"
 	"github.com/gofiber/fiber/v2"
 	"google.golang.org/genai"
