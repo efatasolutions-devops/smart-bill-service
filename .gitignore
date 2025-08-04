@@ -1,4 +1,121 @@
-./storage/*
-/storage/*
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+smart-bill-service
+smart-bill-service.backup.*
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# Go workspace file
+go.work
+
+# Environment variables
 .env
-.vercel
+.env.local
+.env.production
+.env.staging
+
+# Firebase service account keys
+storage/splitbill-firebase-adminsdk.json
+storage/*.json
+*.json
+
+# Logs
+storage/logs/
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Docker
+.dockerignore
+
+# SSL certificates
+ssl/
+*.pem
+*.key
+*.crt
+*.csr
+
+# Backup files
+*.backup
+backup-*
+*.bak
+
+# Upload directories
+storage/public/images/*
+!storage/public/images/.gitkeep
+
+# Node modules (if any)
+node_modules/
+
+# Coverage reports
+coverage.txt
+coverage.html
+
+# Build artifacts
+dist/
+build/
+
+# Local development
+local/
+dev/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Cache
+.cache/
+cache/
+
+# Terraform (if used for infrastructure)
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Kubernetes secrets (if used)
+secrets/
+k8s-secrets/
+
+# Local configuration overrides
+docker-compose.override.yml
+docker-compose.local.yml
+
+# Monitoring and metrics
+prometheus/
+grafana/
+
+# Documentation build
+docs/_build/
+site/

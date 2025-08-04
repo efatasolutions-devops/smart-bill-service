@@ -1,31 +1,65 @@
-# splitbill-app/docker-compose.yml
 version: '3.8'
 
 services:
-  splitbill_golang_app:
-    container_name: splitbill_be_golang_app # Nama kustom untuk container backend
+  smart-bill-service:
     build:
-      context: . # Membangun image dari direktori ./app
-      dockerfile: Dockerfile.golang # Menggunakan Dockerfile kustom untuk Golang
-    restart: always # Selalu restart jika crash
-    expose:
-      - "3000" # Mengekspos port 3000 di dalam jaringan Docker
-    networks:
-      - app_network
-
-  splitbill_nginx:
-    container_name: splitbill_be_golang_app # Nama kustom untuk container nginx
-    image: nginx:alpine # Menggunakan image Nginx resmi
+      context: .
+      dockerfile: Dockerfile
+    container_name: smart-bill-service
+    restart: unless-stopped
     ports:
-      - "8014:8014" # Memetakan port 8014 dari host ke port 8014 di kontainer Nginx
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - HOST=0.0.0.0
+      - FIREBASE_SERVICE_ACCOUNT_KEY_PATH=./storage/splitbill-firebase-adminsdk.json
+      - FIREBASE_PROJECT_ID=splitbill-4c851
+      - BUCKET_STORAGE=FIREBASE
+      - LOG_LEVEL=info
     volumes:
-      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro # Memasang konfigurasi Nginx
-    depends_on:
-      - splitbill_golang_app # Memastikan aplikasi Golang siap sebelum Nginx berjalan
-    restart: always
+      # Mount storage untuk persistent data
+      - ./storage:/app/storage
+      # Mount .env file jika ada
+      - ./.env:/app/.env:ro
     networks:
-      - app_network
+      - smart-bill-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Nginx reverse proxy (optional)
+  nginx:
+    image: nginx:alpine
+    container_name: smart-bill-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro  # untuk SSL certificates
+    depends_on:
+      - smart-bill-service
+    networks:
+      - smart-bill-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 networks:
-  app_network:
+  smart-bill-network:
     driver: bridge
+
+volumes:
+  storage_data:
+    driver: local
